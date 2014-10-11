@@ -1,8 +1,0 @@
----
-uglify: true
----
-
-<%- @include('./narcissus_packed') %>
-<%- @include('./node_ext') %>
-<%- @include('./helpers') %>
-<%- @include('./js2coffee') %>

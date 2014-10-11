@@ -1,30 +1,16 @@
 {
   "title": "Js2Coffee",
   "name": "js2coffee",
-  "version": "0.3.3",
-  "description": "JavaScript to CoffeeScript compiler",
-  "homepage": "http://js2coffee.org",
+  "version": "0.3.3-simplify.0",
+  "description": "Convert Javascript code to Coffeescript",
+  "keywords": [ "javascript", "coffeescript" ],
   "license": {
     "type": "MIT"
   },
-  "keywords": [
-    "javascript",
-    "coffeescript",
-    "language",
-    "compiler"
-  ],
-  "badges": {
-    "travis": true,
-    "npm": true,
-    "david": true,
-    "daviddev": true
+  "author": "2011+ Rico Sta. Cruz <hi@ricostacruz.com> (http://ricostacruz.com); 2014 Michele Bini <michele.bini@gmail.com>",
+  "bin": {
+    "js2coffee": "./bin/js2coffee"
   },
-  "author": "2011+ Rico Sta. Cruz <hi@ricostacruz.com> (http://ricostacruz.com)",
-  "maintainers": [
-    "Rico Sta. Cruz <hi@ricostacruz.com> (http://ricostacruz.com)",
-    "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)",
-    "Anton Wilhelm <timaschew@gmail.com> (https://github.com/timaschew)"
-  ],
   "contributors": [
     "Anton Wilhelm <timaschew@gmail.com> (https://github.com/timaschew)",
     "Benjamin Lupton <b@lupton.cc> (https://github.com/balupton)",
@@ -48,51 +34,13 @@
     "twilson63 (https://github.com/twilson63)",
     "wlaurance (https://github.com/wlaurance)"
   ],
-  "bugs": {
-    "url": "https://github.com/js2coffee/js2coffee/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/js2coffee/js2coffee.git"
-  },
-  "engines": {
-    "node": ">=0.4.0"
+  "devDependencies": {
+    "coffeemake": "*"
   },
   "dependencies": {
-    "coffee-script": "~1.7.1",
-    "file": "~0.2.1",
-    "nopt": "~3.0.1",
-    "underscore": "~1.6.0"
+    "coffee-script": "1.6.*",
+    "file": "0.2.*",
+    "underscore": "1.6.*"
   },
-  "devDependencies": {
-    "ansidiff": "~1.0.0",
-    "docpad": "~6.69.0",
-    "docpad-plugin-browserifydocs": "~2.2.0",
-    "docpad-plugin-coffeescript": "~2.4.0",
-    "docpad-plugin-eco": "~2.0.3",
-    "docpad-plugin-ghpages": "~2.4.3",
-    "docpad-plugin-raw": "~2.3.2",
-    "docpad-plugin-uglify": "~2.4.0",
-    "glob": "~4.0.3",
-    "joe": "~1.5.0",
-    "joe-reporter-console": "^1.2.1",
-    "projectz": "~0.3.11"
-  },
-  "directories": {
-    "lib": "./out/lib"
-  },
-  "bin": {
-    "js2coffee": "./out/bin/js2coffee"
-  },
-  "scripts": {
-    "preinstall": "node ./cyclic.js",
-    "watch": "./node_modules/.bin/cake watch",
-    "compile": "./node_modules/.bin/cake compile",
-    "test": "node ./out/test/everything.js"
-  },
-  "browser": "./out/lib/browser.js",
-  "main": "./out/lib/js2coffee",
-  "cakeConfiguration": {
-    "DOCPAD_SRC_PATH": "src"
-  }
+  "main": "lib/js2coffee"
 }
