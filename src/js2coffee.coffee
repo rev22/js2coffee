@@ -340,9 +340,12 @@ class Builder
 
   'index': (n) ->
     right = @build n.right()
-    if _.any(n.children, (child) -> child.typeName() == 'object_init' and child.children.length > 1)
+    left = @build n.left()
+    if ((child) -> child.typeName() == 'object_init' and child.children.length > 1)(n.left())
+      left = "{#{left}}"
+    if ((child) -> child.typeName() == 'object_init' and child.children.length > 1)(n.right())
       right = "{#{right}}"
-    @l(n)+"#{@build n.left()}[#{right}]"
+    @l(n)+"#{left}[#{right}]"
 
   'throw': (n) ->
     @l(n)+"throw #{@build n.exception}"
