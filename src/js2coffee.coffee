@@ -230,24 +230,26 @@ class Builder
   'script': (n, opts={}) ->
     c = new Code
 
-    # Predeclare variables in the lexical environment
-    if (ea = n.envAnnotation)?
-      # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
-      c.add "#{vv} = \n" for vv in ea.newVars()
-    else
-      throw new Error("Internal error: no lexical environment was allocated for function") 
+    if n.functionBody
+      # Predeclare variables in the lexical environment
+      if (ea = n.envAnnotation)?
+        # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
+        c.add "#{vv} = \n" for vv in ea.newVars()
+      else
+        throw new Error("Internal error: no lexical environment was allocated for block")
 
     # *Functions must always be declared first in a block.*
     _.each n.functions,    (item) => c.add @build(item)
     _.each n.nonfunctions, (item) => c.add @build(item)
 
-    # Predeclare overridden variables in the lexical environment
-    if (ea = n.envAnnotation)?
-      # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
-      if (overridden = ea.overriddenVars())?.length
-        c.scope "do([#{overridden.join()}] = [ ])=>"
-    else
-      throw new Error("Internal error: no lexical environment was allocated for function") 
+    if n.functionBody
+      # Predeclare overridden variables in the lexical environment
+      if (ea = n.envAnnotation)?
+        # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
+        if (overridden = ea.overriddenVars())?.length
+          c.scope "do([#{overridden.join()}] = [ ])=>"
+      else
+        throw new Error("Internal error: no lexical environment was allocated for block")
 
     c.toString()
 
@@ -580,7 +582,7 @@ class Builder
 
   'catch': (n) ->
     body_ = @body(n.block)
-    return '' if trim(body_).length == 0
+    # return '' if trim(body_).length == 0
 
     c = new Code
 
@@ -1041,6 +1043,14 @@ AnnotateEnv =
   'if': (n,e)->
     for p in [ n.condition, n.thenPart, n.elsePart ]
       @defaultTransform p, e
+  'try': (n,e)->
+    @catch(p,e) for p in n.catchClauses
+    for p in ([ n.tryBlock ].concat(n.catchClauses).concat([ n.finallyBlock ]))
+      @defaultTransform p, e
+  'catch': (n,e)->
+    e.add n.varName
+    for p in [ n.block ]
+      @defaultTransform p, e
   'while': (n,e)->
     for p in [ n.condition, n.body ]
       @defaultTransform p, e
@@ -1053,6 +1063,7 @@ AnnotateEnv =
       r[p] = 1
     # n.envAnnotation = 
     @defaultTransform n.body, e.extend r
+    n.body.functionBody = 1
   'var': (n,e)->
     r = { }
     for nn in n.children
