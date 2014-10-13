@@ -247,7 +247,10 @@ class Builder
       if (ea = n.envAnnotation)?
         # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
         if (overridden = ea.overriddenVars())?.length
-          c.scope "do([#{overridden.join()}] = [ ])=>"
+          cc = new Code
+          cc.add "do([#{overridden.join()}] = [ ])=>"
+          cc.scope c
+          return cc.toString()
       else
         throw new Error("Internal error: no lexical environment was allocated for block")
 
