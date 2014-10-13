@@ -980,7 +980,11 @@ class VarEnv
       @vars[v] = 'var'
   currentVars:
     ->
-      Object.keys @vars
+      r = [ ]
+      for k in Object.keys @vars
+        if @vars[k] is 'var'
+          r.push k
+      r
   newVars:
     ->
       r = [ ]
