@@ -234,6 +234,7 @@ class Builder
       # Predeclare variables in the lexical environment
       if (ea = n.envAnnotation)?
         # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
+        # c.add "[#{ea.newVars().join()}]=[]"
         c.add "#{vv} = \n" for vv in ea.newVars()
       else
         throw new Error("Internal error: no lexical environment was allocated for block")
