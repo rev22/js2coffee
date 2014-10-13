@@ -15,7 +15,10 @@
 
 pkg = require('../package.json')
 _ = require('underscore')
-{parser} = require('./narcissus_packed')
+{ parser } = require('./narcissus_packed')
+# { parser } = global.Narcissus = require('./narcissus_packed')
+# { parser } = require('../node-narcissus/main.js')
+# { resolve, StaticEnv } = require('../node-narcissus/lib/jsresolve.js')
 {Types, Typenames, Node} = require('./node_ext')
 {Code, p, strEscapeDoubleQuotes, strEscapeSingleQuotes, unreserve, unshift, isSingleLine, trim, blockTrim, ltrim, rtrim, strRepeat, paren, truthy, indentLines} = require('./helpers')
 
@@ -52,6 +55,9 @@ buildCoffee = (str, opts = {}) ->
     errorLine = err.source.substr(err.cursor)
     console.log "at position: #{errorLine.split('\n')[0]}"
     throw new Error "#{err.message} in line #{line}"
+
+  # resolve scriptNode, new StaticEnv
+  AnnotateEnv.transform scriptNode
 
   try
     output = trim builder.build(scriptNode)
@@ -224,9 +230,24 @@ class Builder
   'script': (n, opts={}) ->
     c = new Code
 
+    # Predeclare variables in the lexical environment
+    if (ea = n.envAnnotation)?
+      # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
+      c.add "#{vv} = \n" for vv in ea.newVars()
+    else
+      throw new Error("Internal error: no lexical environment was allocated for function") 
+
     # *Functions must always be declared first in a block.*
     _.each n.functions,    (item) => c.add @build(item)
     _.each n.nonfunctions, (item) => c.add @build(item)
+
+    # Predeclare overridden variables in the lexical environment
+    if (ea = n.envAnnotation)?
+      # console.log "xxxxxxxxxxxxxxxx #{JSON.stringify(ea)}"
+      if (overridden = ea.overriddenVars())?.length
+        c.scope "do([#{overridden.join()}] = [ ])=>"
+    else
+      throw new Error("Internal error: no lexical environment was allocated for function") 
 
     c.toString()
 
@@ -435,30 +456,24 @@ class Builder
   # For `a = 1, b = 2'
 
   ',': (n) ->
-    list = _.map n.children, (item) => @l(item)+@build(item) + "\n"
-    list.join('')
+    list = _.map n.children, (item) => @l(item)+@build(item)
+    "(" + list.join('; ') + ")" # This is more correct bu potentially unreadable in some cases
 
   # `regexp`
   # Regular expressions.
 
   'regexp': (n) ->
-    m     = n.value.toString().match(/^\/(.*)\/([a-z]?)/)
+    m     = n.value.toString().match(/^\/(.*)\/([a-z]*)$/)
     value = m[1]
-    flag  = m[2]
+    flags  = m[2]
 
-    # **Caveat:**
-    # *If it begins with `=` or a space, the CoffeeScript parser will choke if
-    # it's written as `/=/`. Hence, they are written as `new RegExp('=')`.*
+    if value[0] in [' ', '=']
+      # If it begins with `=` or a space, the CoffeeScript parser would choke, so escape the first character
+      value = "\\" + value
 
-    begins_with = value[0]
+    value = value.replace(/(^|[^\\])([\"\'])/g, (x, a, b)-> a + "\\" + b) # Unescaped quotes can mess up highlighting in some editors, so escape them (this can leave out quote characters preceded by escaped backslashes
 
-    if begins_with in [' ', '=']
-      if flag.length > 0
-        @l(n)+"RegExp(#{strEscape value}, \"#{flag}\")"
-      else
-        @l(n)+"RegExp(#{strEscape value})"
-    else
-      @l(n)+"/#{value}/#{flag}"
+    @l(n)+"/#{value}/#{flags}"
 
   'string': (n) ->
     @l(n)+ strEscape n.value
@@ -648,8 +663,8 @@ class Builder
     # *Account for `if (xyz) {}`, which should be `xyz`. (#78)*
     # *Note that `!xyz` still compiles to `xyz` because the `!` will not change anything.*
     if n.thenPart.isA('block') and n.thenPart.children.length == 0 and !n.elsePart?
-      console.log n.thenPart
-      c.add "#{@build n.condition}\n"
+      # console.log n.thenPart
+      c.add "#{keyword} #{@build n.condition} then\n"
 
     else if isSingleLine(body_) and !n.elsePart?
       c.add "#{trim body_}#{Code.INDENT}#{keyword} #{@build n.condition}\n"
@@ -906,7 +921,7 @@ class Transformer
 
   'if': (n) ->
     # *Account for `if(x) {} else { something }` which should be `something unless x`.*
-    if n.thenPart.isA('block') and n.thenPart.children.length == 0 and (!n.elsePartisA('block') or n.elsePart?.children.length > 0)
+    if n.thenPart.isA('block') and n.thenPart.children.length == 0 and n.elsePart? and (!n.elsePart.isA('block') or n.elsePart.children.length > 0)
       n.positive = false
       n.thenPart = n.elsePart
       delete n.elsePart
@@ -949,6 +964,113 @@ class Transformer
     if right.isA('null', 'void') or right.type is 60 and right.value is 'undefined'
       n.type     = Typenames['existence_check']
       n.children = [n.left()]
+
+class VarEnv
+  constructor:
+    (@vars = {}, @parent = null)->
+      @vars.__proto__ = parent.vars if parent?
+  has:
+    (v)->
+      @vars[v]?
+  parentHas: (v)-> @parent?.has(v)
+  add:
+    (v)->
+      @vars[v] = 'var'
+  currentVars:
+    ->
+      Object.keys @vars
+  newVars:
+    ->
+      r = [ ]
+      for v in @currentVars()
+        unless @parentHas v
+          r.push v
+      r
+  overriddenVars:
+    ->
+      r = [ ]
+      for v in @currentVars()
+        if @parentHas v
+          r.push v
+      r
+  extend:
+    (vars)->
+      new VarEnv vars, @
+    
+narrowJson = (level, x)->
+  level--
+  # console.log typeof x
+  try
+    if 'object' is typeof x
+      if x?.constructor is Node
+        return "{node}" if level < 0
+        r = {}
+        for k of x
+          if k is 'length'
+            continue
+          v = x[k]
+          r[k] = narrowJson(level, v)
+        r
+      else if Array.isArray(x) 
+        return "{arr}" if level < 0
+        r = []
+        r.push narrowJson(level, v) for v in x
+        r
+      else
+        return "{obj}" if level < 0
+        r = {}
+        r[k] = narrowJson(level, v) for k,v of x
+        r
+    else x
+  finally
+
+# console.log narrowJson(2, [ { x: 1 } ]) process.exit 1
+
+AnnotateEnv =
+  transform: (node, env = new VarEnv)->
+    return  if node.envAnnotation?
+    type = node.typeName()
+    # console.log "type: " + type
+    fn = @[type]
+    if fn
+      fn.call this, node, env
+    else
+      @defaultTransform node, env
+  ';': (n,e)->
+    @defaultTransform(n.expression,e)
+  'if': (n,e)->
+    for p in [ n.condition, n.thenPart, n.elsePart ]
+      @defaultTransform p, e
+  'while': (n,e)->
+    for p in [ n.condition, n.body ]
+      @defaultTransform p, e
+  'return': (n,e)->
+    for p in [ n.value ]
+      @defaultTransform p, e
+  'function': (n,e)->
+    r = { }
+    for p in n.params
+      r[p] = 1
+    # n.envAnnotation = 
+    @defaultTransform n.body, e.extend r
+  'var': (n,e)->
+    r = { }
+    for nn in n.children
+      e.add nn.name
+  defaultTransform: (n, env)->
+    return unless n?
+    # console.log "enter"
+    if n.children?
+      for nn in n.children
+        if nn?
+          # console.log "child #{nn.typeName()} #{JSON.stringify(narrowJson(3,nn))}"
+          @transform nn, env
+        else
+          console.log "empty child"
+    else
+      console.log "no children"
+    n.envAnnotation = env
+    # console.log "leave"
 
 class UnsupportedError
   constructor: (str, src) ->
