@@ -888,8 +888,8 @@ class Transformer
 
       if node.value and lastNode
         if node.isA('return')
-          lastNode.type = Typenames[';']
-          lastNode.expression = lastNode.value
+          # lastNode.type = Typenames[';']
+          # lastNode.expression = lastNode.value
         else if lastNode.isA('if', 'switch', 'block')
           #console.log "disregarding nonreturn: #{node.value} and #{lastNode.typeName()}:#{lastNode.value}"
         else
@@ -902,6 +902,21 @@ class Transformer
         type: 'return'
         typeName: -> @type
         isA: (t) -> t == @type
+
+    else
+     # *Unwrap the `return`s.*
+     n.body.walk last: true, (parent, node, list) ->
+
+      lastNode = if list
+        parent[list]
+      else
+        parent.children[parent.children.length-1]
+
+      if node.value and lastNode
+        if node.isA('return')
+          lastNode.type = Typenames[';']
+          lastNode.expression = lastNode.value
+
 
   'switch': (n) ->
     _.each n.cases, (item) =>
