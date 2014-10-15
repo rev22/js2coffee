@@ -1,6 +1,6 @@
 #!/usr/bin/env refcoffee
 
-js2coffee = require '../lib/js2coffee'
+js2coffee = require './lib/js2coffee'
 
 stripJs = (x)->
   x

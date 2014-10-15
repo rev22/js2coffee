@@ -780,7 +780,7 @@ class Builder
       c.add "#{n.name} = "
 
     if n.params.length > 0
-      c.add "(#{params.join ', '}) ->"
+      c.add "(#{params.join ', '})->"
     else
       c.add "->"
 
