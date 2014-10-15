@@ -1,4 +1,4 @@
-This fork is a refactoring of the upstream js2coffee: http://github.com/js2coffee/js2coffee
+This fork is a refactoring of the upstream js2coffee (http://github.com/js2coffee/js2coffee), with various fixes applied.
 
 # js2coffee
 
