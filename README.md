@@ -2,16 +2,6 @@ This fork is a refactoring of the upstream js2coffee (http://github.com/js2coffe
 
 # js2coffee
 
-<!-- BADGES/ -->
-
-[![Build Status](http://img.shields.io/travis-ci/js2coffee/js2coffee.png?branch=master)](http://travis-ci.org/js2coffee/js2coffee "Check this project's build status on TravisCI")
-[![NPM version](http://badge.fury.io/js/js2coffee.png)](https://npmjs.org/package/js2coffee "View this project on NPM")
-[![Dependency Status](https://david-dm.org/js2coffee/js2coffee.png?theme=shields.io)](https://david-dm.org/js2coffee/js2coffee)
-[![Development Dependency Status](https://david-dm.org/js2coffee/js2coffee/dev-status.png?theme=shields.io)](https://david-dm.org/js2coffee/js2coffee#info=devDependencies)<br/>
-
-<!-- /BADGES -->
-
-
 A JavaScript to [CoffeeScript](http://coffeescript.org/) compiler
 
 
