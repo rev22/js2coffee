@@ -1,3 +1,5 @@
+This fork is a refactoring of the upstream js2coffee: http://github.com/js2coffee/js2coffee
+
 # js2coffee
 
 <!-- BADGES/ -->
@@ -165,6 +167,8 @@ These amazing people have contributed code to this project:
 Licensed under the incredibly [permissive](http://en.wikipedia.org/wiki/Permissive_free_software_licence) [MIT license](http://creativecommons.org/licenses/MIT/)
 
 Copyright &copy; 2011+ Rico Sta. Cruz <hi@ricostacruz.com> (http://ricostacruz.com)
+
+Copyright ⓒ 2014 Michele Bini <michele.bini@gmail.com>
 
 <!-- /LICENSE -->
 

@@ -1,3 +1,11 @@
+# Copyright &copy; 2011+ Rico Sta. Cruz <hi@ricostacruz.com> (http://ricostacruz.com)
+
+# Copyright (c) 2014 Michele Bini <michele.bini@gmail.com>
+
+# This file from http://gituhub.com/js2coffee/js2coffee was modified by Michele Bini
+
+# Please consult README.md for the licensing terms
+
 # The JavaScript to CoffeeScript compiler.
 #
 # Common usage:

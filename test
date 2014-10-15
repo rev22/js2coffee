@@ -1,0 +1,204 @@
+#!/usr/bin/env refcoffee
+
+js2coffee = require '../lib/js2coffee'
+
+stripJs = (x)->
+  x
+  .replace(/\n+$/, "")
+
+stripCoffee = (x)->
+  rx = /(^|\n)([ \t]*[a-z]+ =)( *undefined\n([ \t]*\n)*\2)+/g
+  x
+  .replace rx,
+      (x, y, z)->
+        y + z
+
+
+toCoffee = (x)-> stripCoffee(js2coffee.build x)
+
+# CoffeeScript ?= require 'coffee-script'
+
+toJs = (x)-> stripJs(CoffeeScript.compile x, bare:true)
+
+false then 
+  console.log stripCoffee
+    ''''
+    foo = undefined
+
+    foo = (b)->
+  process.exit(1)
+
+print = (x)-> process.stdout.write x
+println = (x)-> print x + "\n"
+
+
+checkInvariance = (x)->
+  print "Test: "
+  print x.replace(/\n(.+|\n+)*/, "")
+  print " (running)"
+  unless x is (z = toJs(y = toCoffee(x)))
+    console.log "Code is not invariant!"
+    console.log "x: #{x}"
+    console.log "y: #{y}"
+    console.log "z: #{z}"
+    process.exit(1)
+  println " OK"
+
+checkEvalInvariance = (x)->
+  print "Test: "
+  print x.replace(/\n(.+|\n+)*/, "")
+  print " (running)"
+  unless eval(x) is eval(z = toJs(y = toCoffee(x)))
+    console.log "Evaluation is not invariant!"
+    console.log "x: #{x}"
+    console.log "y: #{y}"
+    console.log "z: #{z}"
+    process.exit(1)
+  println " OK"
+
+xy =
+  x: (@a)-> @
+  y: (@b)->
+    unless @b is (v = toCoffee(@a))
+      console.log "Code conversion mismatch"
+      console.log "y: #{@a}"
+      console.log "a: #{@b}"
+      console.log "b: #{v}"
+    @
+      
+
+x = checkInvariance
+
+x "1;"
+x "1 + 2;"
+x "1 / 3;"
+x "0.555;"
+x "0.999;"
+x "+0.999;"
+x "-0.999;"
+x
+  ''''
+  if (1) {
+    3;
+  }
+x
+  ''''
+  x(function() {
+    if (1) {
+      3;
+    } else {
+      4;
+    }
+  });
+x
+  ''''
+  var foo;
+
+  foo = function() {
+    if (1) {
+      3;
+    } else {
+      4;
+    }
+  };
+
+  foo(2);
+x
+  ''''
+  var foo;
+
+  foo = function() {
+    if (1) {
+      3;
+    } else {
+      4;
+    }
+  };
+x
+  ''''
+  xxxyxxx({
+    1110111: 2220222,
+    1119111: 2229222
+  }[yyyxyyy]);
+x
+  ''''
+  if (foo()) {
+
+  }
+x
+  ''''
+  while ((foo(), bar())) {
+    continue;
+  }
+false && checkEvalInvariance # expected failure
+  ''''
+  (function(){
+    try {
+      throw 2;
+    } catch (c) {
+      return c;
+    }
+  })();
+checkEvalInvariance
+  ''''
+  (function(){
+    var x = 1;
+    try {
+      throw 2;
+    } catch (c) {
+      x = c;
+    }
+    return x;
+  })();
+checkEvalInvariance
+  ''''
+  (function(){
+    function foo() {
+      x = 2;
+    }
+    var x = 1;
+    foo();
+    return x;
+  })();
+checkInvariance
+  ''''
+  (function() {
+    if (1) {
+      return false;
+    } else {
+      return true;
+    }
+  })();
+checkInvariance
+  ''''
+  var g;
+  
+  g = function(x) {
+    if (1) {
+      h();
+    } else {
+      return false;
+    }
+  };
+checkInvariance
+  ''''
+  var g;
+  
+  g = function(x) {
+    if (1) {
+      return h();
+    } else {
+      return false;
+    }
+  };
+checkInvariance
+  ''''
+  var g;
+  
+  g = function(x) {
+    if (1) {
+      h();
+    } else {
+      false;
+    }
+  };
