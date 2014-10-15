@@ -18,10 +18,6 @@ A JavaScript to [CoffeeScript](http://coffeescript.org/) compiler
 - Install: `npm install --save js2coffee`
 - CDN URL: `//wzrd.in/bundle/js2coffee@0.3.1`
 
-### [Ender](http://ender.jit.su/)
-- Use: `require('js2coffee')`
-- Install: `ender add js2coffee`
-
 <!-- /INSTALL -->
 
 
